@@ -36,12 +36,12 @@ tx_busy operation,
 newrx indication.
 
 Tools Used:
-⁕Verilog HDL
-⁕Vivado Simulator
+Verilog HDL,
+Vivado Simulator.
 
 Skills Demonstrated:
-⁕RTL Design
-⁕FSM Design
-⁕Digital Design
-⁕Functional Verification
-⁕UART Protocol
+RTL Design,
+FSM Design,
+Digital Design,
+Functional Verification,
+UART Protocol.
