@@ -1,0 +1,45 @@
+module uart_top
+#(
+    parameter CLK_FREQ  = 1000000,
+    parameter BAUD_RATE = 9600
+)
+(
+    input wire clk,
+    input wire rst,
+    input wire tx_start,
+    input wire [7:0] tx_data,
+
+    output wire [7:0] rx_data,
+    output wire newrx,
+    output wire tx_busy,
+    output wire tx
+);
+
+    wire serial_line;
+
+    uart_tx #(
+        .CLK_FREQ(CLK_FREQ),
+        .BAUD_RATE(BAUD_RATE)
+    ) transmitter (
+        .clk(clk),
+        .rst(rst),
+        .tx_start(tx_start),
+        .tx_data(tx_data),
+        .tx(serial_line),
+        .tx_busy(tx_busy)
+    );
+
+    uart_rx #(
+        .CLK_FREQ(CLK_FREQ),
+        .BAUD_RATE(BAUD_RATE)
+    ) receiver (
+        .clk(clk),
+        .rst(rst),
+        .rx(serial_line),
+        .rx_data(rx_data),
+        .newrx(newrx)
+    );
+
+    assign tx = serial_line;
+
+endmodule

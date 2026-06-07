@@ -1,0 +1,54 @@
+module tb_uart_top;
+
+    reg clk;
+    reg rst;
+    reg tx_start;
+    reg [7:0] tx_data;
+
+    wire [7:0] rx_data;
+    wire newrx;
+    wire tx_busy;
+    wire tx;
+
+    uart_top uut (
+        .clk(clk),
+        .rst(rst),
+        .tx_start(tx_start),
+        .tx_data(tx_data),
+        .rx_data(rx_data),
+        .newrx(newrx),
+        .tx_busy(tx_busy),
+        .tx(tx)
+    );
+
+    initial begin
+    clk = 0;
+    rst = 1;
+    tx_start = 0;
+    tx_data = 0;
+
+    #2000;
+    rst = 0;
+
+    @(posedge clk);
+    tx_data = 8'hA5;
+    tx_start = 1;
+
+    @(posedge clk);
+    tx_start = 0;
+
+    #15000;
+@(posedge clk);
+tx_start = 0;
+#5000000;
+$finish;
+end
+
+always #500 clk = ~clk;
+
+initial begin
+    $monitor("t=%0t,tx=%b,tx_busy=%b, tx_data=%h --> rx_data=%h newrx=%b",
+              $time, tx, tx_busy,tx_data,rx_data, newrx);
+end
+
+endmodule

@@ -1,0 +1,130 @@
+module uart_tx #
+(
+    parameter CLK_FREQ  = 1000000,
+    parameter BAUD_RATE = 9600
+)
+(
+    input wire clk,
+    input wire rst,
+    input wire tx_start,
+    input wire [7:0] tx_data,
+
+    output reg tx,
+    output reg tx_busy
+);
+
+localparam CLKCOUNT = CLK_FREQ / BAUD_RATE;
+
+reg [15:0] baud_cnt;
+reg baud_tick;
+
+reg [7:0] data_reg;
+reg [2:0] bitcnt;
+reg start_req;
+
+localparam IDLE     = 2'b00;
+localparam START    = 2'b01;
+localparam TRANSFER = 2'b10;
+localparam STOP     = 2'b11;
+
+reg [1:0] state;
+
+always @(posedge clk or posedge rst)
+begin
+    if(rst)
+    begin
+        baud_cnt  <= 0;
+        baud_tick <= 0;
+    end
+    else
+    begin
+        if(baud_cnt == CLKCOUNT-1)
+        begin
+            baud_cnt  <= 0;
+            baud_tick <= 1;
+        end
+        else
+        begin
+            baud_cnt  <= baud_cnt + 1;
+            baud_tick <= 0;
+        end
+    end
+end
+
+always @(posedge clk or posedge rst)
+begin
+    if(rst)
+        start_req <= 0;
+    else if(tx_start)
+        start_req <= 1;
+    else if(state == START)
+        start_req <= 0;
+end
+
+always @(posedge clk or posedge rst)
+begin
+    if(rst)
+    begin
+        state   <= IDLE;
+        tx      <= 1'b1;
+        tx_busy <= 1'b0;
+        bitcnt  <= 0;
+        data_reg <= 8'd0;
+    end
+    else
+    begin
+        case(state)
+
+            IDLE:
+            begin
+                tx <= 1'b1;
+                tx_busy <= 1'b0;
+                bitcnt <= 0;
+
+                if(start_req)
+                begin
+                    data_reg <= tx_data;
+                    tx_busy <= 1'b1;
+                    state <= START;
+                end
+            end
+
+            START:
+            begin
+                if(baud_tick)
+                begin
+                    tx <= 1'b0;
+                    state <= TRANSFER;
+                end
+            end
+
+            TRANSFER:
+            begin
+                if(baud_tick)
+                begin
+                    tx <= data_reg[bitcnt];
+
+                    if(bitcnt < 7)
+                        bitcnt <= bitcnt + 1;
+                    else
+                    begin
+                        bitcnt <= 0;
+                        state <= STOP;
+                    end
+                end
+            end
+
+           STOP:
+		begin
+    		if(baud_tick)
+    		   begin
+        		tx <= 1'b1;
+        		tx_busy <= 1'b0;
+        		state <= IDLE;
+  		   end
+		end
+        endcase
+    end
+end
+
+endmodule
